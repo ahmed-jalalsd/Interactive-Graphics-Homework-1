@@ -6,5 +6,5 @@ procedural texture and two projections (orthographic, and
 perspective)
 
 <p align="center">
-  <img https://github.com/ahmed-jalalsd/Interactive-Graphics-Homework-1/blob/master/Screenshot_2019-07-30%20Homework%201%20WebGL.png/>
+  <img src=" https://github.com/ahmed-jalalsd/Interactive-Graphics-Homework-1/blob/master/Screenshot_2019-07-30%20Homework%201%20WebGL.png"/>
 </p>
