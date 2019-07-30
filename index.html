@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Homework 1: WebGL</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <link href="style.css" rel="stylesheet">
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+            precision mediump float;
+
+            //inputs
+            attribute  vec4 vPosition;
+            attribute  vec3 vNormal;
+            attribute  vec2 vTexCoord;
+            attribute  vec4 vColor;
+
+
+            //outputs to  fragment shader
+            varying vec4 fColor;
+            varying vec3 N,L,E;
+            varying vec2 fTexCoord;
+
+            uniform mat4 modelViewMatrix;
+            uniform mat4 projectionMatrix;
+            uniform vec3 thetaR;
+
+            uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+            uniform vec4 lightPosition;
+            uniform float shininess;
+            uniform mat3 normalMatrix;
+            uniform bool shadeFlag;
+
+            void main()
+            {
+                vec3 pos = (modelViewMatrix * vPosition).xyz;
+                fTexCoord = vTexCoord;
+                if(shadeFlag) {
+                   
+                    vec3 light = lightPosition.xyz;
+                    
+                    // check for directional light
+                    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+                    else L = normalize( lightPosition.xyz - pos );
+
+                    E = -normalize( pos );
+                    vec3 H = normalize( L + E );
+
+                    // Transform vertex normal into eye coordinates
+                    N = normalize( normalMatrix*vNormal.xyz);
+
+                    // Compute terms in the illumination equation
+                    vec4 ambient = ambientProduct;
+                    //vec4 ambient = 0.5*vColor;
+
+                    float Kd = max( dot(L, N), 0.0 );
+                    vec4  diffuse = Kd*diffuseProduct;
+
+                    float Ks = pow( max(dot(N, H), 0.0), shininess );
+                    vec4  specular = Ks * specularProduct;
+                    
+                    if( dot(L, N) < 0.0 ) {
+                        specular = vec4(0.0, 0.0, 0.0, 1.0);
+                    } 
+
+                    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+                    
+                    fColor = ambient + diffuse +specular;
+                    fColor.a = 1.0;
+                }
+                else {
+                    vec3 light;
+                    vec3 pos = (modelViewMatrix * vPosition).xyz;
+                    if(lightPosition.z == 0.0)  L = normalize(lightPosition.xyz);
+                    else  L = normalize(lightPosition).xyz - pos;
+
+                    E =  -normalize(pos);
+                    N = normalize( normalMatrix*vNormal.xyz);
+                    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+                }
+            }
+
+        </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+
+            precision mediump float;
+
+            varying vec4 fColor;
+            varying vec3 N,L,E;
+            varying  vec2 fTexCoord;
+
+            uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+            uniform vec4 lightPosition;
+            uniform float shininess;
+            uniform bool shadeFlag;
+            uniform sampler2D texture;
+
+            
+            void
+            main()
+            {
+                if(shadeFlag) {
+                    //gl_FragColor = fColor;
+                    gl_FragColor = fColor*texture2D( texture, fTexCoord );
+                }
+                
+                else {
+                    vec4 fColor;
+                    vec3 H = normalize( L + E );
+                    vec4 ambient = ambientProduct;
+                    float Kd = max( dot(L, N), 0.0 );
+                    vec4 diffuse = Kd*diffuseProduct;
+                    float Ks = pow( max(dot(N, H), 0.0), shininess );
+                    vec4 specular = Ks * specularProduct;
+                    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+                    fColor = ambient + diffuse +specular;
+                    fColor.a = 1.0;
+                   // gl_FragColor = fColor;
+                   gl_FragColor = fColor*texture2D( texture, fTexCoord );
+
+                }
+            
+            }
+        </script>
+
+    <script type="text/javascript" src="Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="Common/initShaders.js"></script>
+    <script type="text/javascript" src="Common/MV.js"></script>
+    <script type="text/javascript" src="homework1.js"></script>
+</head>
+
+<body>
+    <header>
+
+        <h1>Homework 1: Interactive Graphics</h1>
+
+        <div class="droplist">
+            <span>
+                <button id="btnIncreaseR">Increase R</button>
+                <button id="btnDecreaseR">Decrease R</button>
+                <button id="btnIncreaseTheta">Increase theta</button>
+                <button id="btnDecreaseTheta">Decrease theta</button>
+                <button id="btnIncreasePhi">Increase phi</button>
+                <button id="btnDecreasePhi">Decrease phi</button>
+            </span>
+        </div>
+
+       
+       
+        <div class="panel">
+            <p>Near and Far Parameters</p>
+            <table>
+                <tr>
+                    <td>zNear</td>
+                    <td>
+                        .01<input id="zNearSlider" type="range" min=".01" max="3" step="0.1" value="0.3" /> 5
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>zFar</td>
+                    <td>
+                        3<input id="zFarSlider" type="range" min="3" max="10" step="3.0" value="3" /> 10
+
+                    </td>
+
+                </tr>
+
+            </table>
+
+        </div>
+
+        <div class="panel" style="margin-left:10px">
+            <p>Translation and scale Parameters</p>
+            <table>
+
+                <tr>
+                    <td>Scale</td>
+                    <td colspan="2"> 1 <input id="scale" type="range" min="0.1" max="5" step="0.5" value="1" /> 5 </td>
+                </tr>
+
+                <tr>
+                    <td>translate X</td>
+                    <td>
+                        <input id="translateX" type="range" min="-1" max="1" step="0.01" value="0" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>translate Y</td>
+                    <td>
+                        <input id="translateY" type="range" min="-1" max="1" step="0.01" value="0.5" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>translate Z</td>
+                    <td>
+                        <input id="translateZ" type="range" min="-1" max="1" step="0.01" value="0" />
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+
+        <!-- <button id="btnShade">Shading Model</button>    -->
+
+        <!-- <label for="shade-select">Choose a shading model:</label> -->
+
+        <div class="panel" style="margin-left:10px">
+                <p>Shading Model</p>
+                <table>
+        <select id="shadeModel-select" onchange="modelChanged()">
+            <option value="1">Gouraud Shading</option>
+            <option value="2">Phong Shading</option>
+        </select>
+    </table>
+        </div>
+
+    </header>
+
+    <canvas id="gl-canvas" width="1024" height="1024">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+</body>
+
+</html>
