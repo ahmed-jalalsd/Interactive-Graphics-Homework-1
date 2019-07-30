@@ -4,3 +4,7 @@ view, projection, scaling and translation matrices, and also adding
 lights, two shading model Phong Shading and Gouraud Shading,
 procedural texture and two projections (orthographic, and
 perspective)
+
+<p align="center">
+  <img />
+</p>
