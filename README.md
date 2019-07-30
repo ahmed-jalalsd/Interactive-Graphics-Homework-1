@@ -10,5 +10,4 @@ perspective)
 </p>
 
 live Demo:
-https://sapienzainteractivegraphicscourse.github.io/ig-hw1-
-osmanahmed002/
+https://sapienzainteractivegraphicscourse.github.io/ig-hw1-osmanahmed002/
